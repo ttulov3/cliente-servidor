@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste</title>
+</head>
+<body>
+    <script>
+         async function main() {
+             const request = await fetch("meus-dados.txt")
+             const data = await request.text()
+             document.body.innerHTML = `<pre>${data}</pre>`
+
+       }
+
+        main()
+
+        async function main() {
+            const request = await fetch("meus-dados.json")
+            const data = await request.json()
+            
+            data.forEach(pessoa =>{
+                document.body.innerHTML += `<button> 
+                        ${pessoa.nome},
+                        ${pessoa.idade}
+                    <button>` 
+            })
+
+        }
+
+        main()
+    </script>
+</body>
+</html>
