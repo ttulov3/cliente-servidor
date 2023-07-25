@@ -1,36 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste</title>
-</head>
-<body>
-    <script>
-         async function main() {
-             const request = await fetch("meus-dados.txt")
-             const data = await request.text()
-             document.body.innerHTML = `<pre>${data}</pre>`
 
+<head>
+  <meta charset="UTF-8">
+  <title>Teste</title>
+  <style>
+    ul, li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    ul.movie-list {
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    ul.movie-list > li {
+      border: 1px solid #000000;
+      margin: 1rem;
+      cursor: pointer;
+    }
+    
+    ul.movie-list > li > div {
+      background-color: #000000;
+      padding: .25rem .5rem;
+      color: #FFFFFF;
+    }
+
+    ul.movie-list > li > ul {
+      padding: .5rem;
+      transition: .3s;
+    }
+
+    ul.movie-list > li > ul:hover {
+      background-color: #00000033;
+    }
+    </style>
+</head>
+
+<body>
+  <dialog>
+    <header>
+      <h1>Logue-se</h1>
+    </header>
+    <main>
+      <form>
+        <input placeholder="login" name="login">
+        <input placeholder="senha" name="senha">
+      </form>
+    </main>
+    <footer></footer>
+
+  </dialog>
+  <form class="form-alterar">
+    <div>
+      <label for="title">title</label>
+      <input name="title" id="title">
+    </div>
+    <div>
+      <label for="source">source</label>
+      <input name="source" id="source">
+    </div>
+    <div>
+      <label for="description">description</label>
+      <input name="description" id="description">
+    </div>
+    <div>
+      <label for="thumb">thumb</label>
+      <input name="thumb" id="thumb">
+    </div>
+    <div>
+      <button>Cadastrar</button>
+    </div>
+  </form>
+
+  <ul class="movie-list">
+    <!--  -->
+  </ul>
+
+  <script>
+    const domMovieList = document.querySelector("ul.movie-list")
+    const domFormAlterar = document.querySelector("form.form-alterar")
+    const loginModal = document.querySelector("dialog")
+    const loginForm = loginModal.querySelector("form")
+    const loginFormButtonSend = loginModal.querySelector(".bt-send")
+
+    // ---✀------------------------------------------------------------------
+       if(!localStorage.getItem("token")){
+        loginModal.showModal()
+       }else{
+        listarTodosOsFilmes()
        }
 
-        main()
+       loginFormButtonSend.addEventListener("click", async ev =>{
+        const { login, swnha} = loginForm
+        const response = await fetch (`/login?login=${login.value}&senha=${senha.value}`)
+        const data = await response.json()
+        if(data.token){
+          localStorage.setItem("token", data.token)
+          loginModal.close()
+          listarTodosOsFilmes()
+          return
+        }    
+        loginMsg.innerHTML = `<strong>Usuario e/ou senha invalidos </strong>` 
+      })
+    // ---✀------------------------------------------------------------------
+    async function listarTodosOsFilmes() {
+      const response = await fetch("/movies")
+      const movies = await response.json()
+      domMovieList.innerHTML = ""
+      movies.forEach(movie => {
+        domMovieList.innerHTML += `  
+          <li>
+            <div>
+              <strong>title:</strong> ${movie.title}
+            </div>
+            <ul>
+              <li>
+                <strong>source:</strong> ${movie.source}
+              </li>
+              <li>
+                <strong>thumb:</strong> ${movie.thumb}
+              </li>
+              <li>
+                <strong>description:</strong> ${movie.description}
+              </li>
+              <li>
+                <button class="excluir" data-id="${movie.id}">excluir</button>
+                <button class="alterar" data-id="${movie.id}">alterar</button>
+              </li>
+            </ul>
+          </li>
+        `
+      });
+    }
 
-        async function main() {
-            const request = await fetch("meus-dados.json")
-            const data = await request.json()
-            
-            data.forEach(pessoa =>{
-                document.body.innerHTML += `<button> 
-                        ${pessoa.nome},
-                        ${pessoa.idade}
-                    <button>` 
-            })
+    listarTodosOsFilmes()
 
-        }
+    // ---✀------------------------------------------------------------------
+    
+    domFormAlterar.addEventListener("submit", async ev => {
+      ev.preventDefault()
+      ev.stopPropagation()
+      ev.stopImmediatePropagation()
 
-        main()
-    </script>
+      const body = JSON.stringify({
+        title: domFormAlterar.title.value,
+        source: domFormAlterar.source.value,
+        description: domFormAlterar.description.value,
+        thumb: domFormAlterar.thumb.value,
+      })
+      
+      const response = await fetch("/movies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body
+      })
+      
+      const result = await response.json()
+      domFormAlterar.reset()
+
+      listarTodosOsFilmes()
+    })
+    
+    // ---✀------------------------------------------------------------------
+
+    domMovieList.addEventListener("click", async ev => {
+      if(ev.target.classList.contains("excluir")) {
+        const response = await fetch(`/movies?id=${ev.target.dataset.id}`, { method: "DELETE" })
+        const movies = await response.json()
+        listarTodosOsFilmes()
+        return
+      }
+    
+      if(ev.target.classList.contains("alterar")) {
+        const response = await fetch(`/movies?id=${ev.target.dataset.id}`, { 
+          method: "PATCH",
+          body: JSON.stringify({
+            title: "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+            source: "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+            description: "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+            thumb: "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+          })
+        })
+        const movies = await response.json()
+        listarTodosOsFilmes()
+        return
+      }
+    })
+
+  </script>
 </body>
+
 </html>
